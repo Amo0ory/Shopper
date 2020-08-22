@@ -4,13 +4,19 @@ export const SIGNUP = 'SIGNUP';
 export const LOGIN = 'LOGIN';
 export const AUTHENTICATE = 'AUTHENTICATE';
 export const LOGOUT = 'LOGOUT';
-
+let timer;
 
 export const logout = ()=>{
+    clearLogoutTimer();
+    AsyncStorage.removeItem('userData');
     return {type: LOGOUT}
 }
-export const authenticate = (userId, token) =>{
-    return {type:AUTHENTICATE, userId: userId, token: token};
+export const authenticate = (userId, token, expirtyTime) =>{
+    return dispatch =>{
+        dispatch(setLogoutTimer(expirtyTime));
+        dispatch({type:AUTHENTICATE, userId: userId, token: token});
+    }
+   
 }
 export const signup = (email, password) =>{
 
@@ -41,7 +47,7 @@ export const signup = (email, password) =>{
         }
         const resData = await response.json();
         console.log(resData);
-        dispatch(authenticate(resData.localId, resData.idToken))
+        dispatch(authenticate(resData.localId, resData.idToken, parseInt(resData.expiresIn *1000)))
         const expirationDate = new Date(new Date().getTime() + parseInt(resData.expiresIn * 1000));
         saveDataToStorage(resData.idToken, resData.localId, expirationDate);
 
@@ -80,11 +86,24 @@ export const login = (email, password) =>{
 
         const resData = await response.json();
         console.log(resData);
-        dispatch(authenticate(resData.userId, resData.idToken))
+        dispatch(authenticate(resData.userId, resData.idToken, parseInt(resData.expiresIn *1000)))
         const expirationDate = new Date(new Date().getTime() + parseInt(resData.expiresIn) * 1000);
         saveDataToStorage(resData.idToken, resData.localId, expirationDate);
     }
 
+}
+const clearLogoutTimer = ()=>{
+    if(timer){
+        clearTimeout(timer);
+    }
+}
+const setLogoutTimer = expirationTime =>{
+
+    return dispatch =>{
+        timer = setTimeout(() =>{
+            dispatch(logout());
+        },expirationTime/1000)  // changes the logout timer 
+    }
 }
 
 const saveDataToStorage = (token, userId, expirationDate) =>{
