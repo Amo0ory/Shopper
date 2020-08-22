@@ -1,20 +1,23 @@
 import React, {useState} from 'react';
-import {createStore, combineReducers} from 'redux';
+import {createStore, combineReducers, applyMiddleware} from 'redux';
 import {Provider} from 'react-redux';
+import ReduxThunk from 'redux-thunk';
 import productReducer from './store/reducers/products';
-import ShopNavigator from './navigation/ShopNavigation';
+import ShopNavigator from './navigation/ShopNavigator';
 import {AppLoading} from 'expo';
 import * as Font from 'expo-font';
 import cartReducer from './store/reducers/cart';
 import orderReducer from './store/reducers/orders';
+import authReducer from './store/reducers/auth';
 
 const rootReducer = combineReducers({
   products: productReducer,
   cart: cartReducer,
-  orders:orderReducer
+  orders:orderReducer,
+  auth: authReducer
 });
 
-const store = createStore(rootReducer);
+const store = createStore(rootReducer, applyMiddleware(ReduxThunk));
 const fetchFont = ()=>{
   return Font.loadAsync({
     'open-sans':require('./assets/fonts/OpenSans-Regular.ttf'),
